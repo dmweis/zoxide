@@ -79,13 +79,13 @@ pub fn resolve_symlinks() -> bool {
 }
 
 pub enum FuzzySearcher {
-    FZF,
-    SKIM,
+    Fzf,
+    Skim,
 }
 
 pub fn fuzzy_searcher() -> FuzzySearcher {
     match env::var_os("_ZO_USE_SKIM") {
-        Some(var) if var == "1" => FuzzySearcher::SKIM,
-        _ => FuzzySearcher::FZF,
+        Some(var) if var == "1" => FuzzySearcher::Skim,
+        _ => FuzzySearcher::Fzf,
     }
 }

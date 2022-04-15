@@ -24,19 +24,19 @@ impl FuzzySearcher {
     pub fn new(multiple: bool) -> Result<Self> {
         let searcher = config::fuzzy_searcher();
         let bin = match searcher {
-            config::FuzzySearcher::FZF => {
+            config::FuzzySearcher::Fzf => {
                 if cfg!(windows) {
                     "fzf.exe"
                 } else {
                     "fzf"
                 }
             }
-            config::FuzzySearcher::SKIM => "sk",
+            config::FuzzySearcher::Skim => "sk",
         };
 
         let error_not_found_message = match searcher {
-            config::FuzzySearcher::FZF => Self::ERR_FZF_NOT_FOUND,
-            config::FuzzySearcher::SKIM => Self::ERR_SKIM_NOT_FOUND,
+            config::FuzzySearcher::Fzf => Self::ERR_FZF_NOT_FOUND,
+            config::FuzzySearcher::Skim => Self::ERR_SKIM_NOT_FOUND,
         };
 
         let mut command = get_command(bin).map_err(|_| anyhow!(error_not_found_message))?;
@@ -46,7 +46,7 @@ impl FuzzySearcher {
         command.arg("-n2..").stdin(Stdio::piped()).stdout(Stdio::piped());
 
         match searcher {
-            config::FuzzySearcher::FZF => {
+            config::FuzzySearcher::Fzf => {
                 if let Some(fzf_opts) = config::fzf_opts() {
                     command.env("FZF_DEFAULT_OPTS", fzf_opts);
                 } else {
@@ -71,7 +71,7 @@ impl FuzzySearcher {
                     }
                 }
             }
-            config::FuzzySearcher::SKIM => {
+            config::FuzzySearcher::Skim => {
                 if let Some(skim_opts) = config::skim_opts() {
                     command.env("SKIM_DEFAULT_OPTS", skim_opts);
                 } else {
