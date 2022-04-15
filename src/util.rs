@@ -13,51 +13,98 @@ use crate::config;
 use crate::db::Epoch;
 use crate::error::SilentExit;
 
-pub struct Fzf {
+pub struct FuzzySearcher {
     child: Child,
 }
 
-impl Fzf {
-    const ERR_NOT_FOUND: &'static str = "could not find fzf, is it installed?";
+impl FuzzySearcher {
+    const ERR_FZF_NOT_FOUND: &'static str = "could not find fzf, is it installed?";
+    const ERR_SKIM_NOT_FOUND: &'static str = "could not find skim, is it installed?";
 
     pub fn new(multiple: bool) -> Result<Self> {
-        let bin = if cfg!(windows) { "fzf.exe" } else { "fzf" };
-        let mut command = get_command(bin).map_err(|_| anyhow!(Self::ERR_NOT_FOUND))?;
+        let searcher = config::fuzzy_searcher();
+        let bin = match searcher {
+            config::FuzzySearcher::FZF => {
+                if cfg!(windows) {
+                    "fzf.exe"
+                } else {
+                    "fzf"
+                }
+            }
+            config::FuzzySearcher::SKIM => "sk",
+        };
+
+        let error_not_found_message = match searcher {
+            config::FuzzySearcher::FZF => Self::ERR_FZF_NOT_FOUND,
+            config::FuzzySearcher::SKIM => Self::ERR_SKIM_NOT_FOUND,
+        };
+
+        let mut command = get_command(bin).map_err(|_| anyhow!(error_not_found_message))?;
         if multiple {
             command.arg("-m");
         }
         command.arg("-n2..").stdin(Stdio::piped()).stdout(Stdio::piped());
-        if let Some(fzf_opts) = config::fzf_opts() {
-            command.env("FZF_DEFAULT_OPTS", fzf_opts);
-        } else {
-            command.args(&[
-                // Search result
-                "--no-sort",
-                // Interface
-                "--keep-right",
-                // Layout
-                "--height=40%",
-                "--info=inline",
-                "--layout=reverse",
-                // Scripting
-                "--exit-0",
-                "--select-1",
-                // Key/Event bindings
-                "--bind=ctrl-z:ignore",
-            ]);
-            if cfg!(unix) {
-                command.env("SHELL", "sh");
-                command.arg(r"--preview=\command -p ls -p {2..}");
+
+        match searcher {
+            config::FuzzySearcher::FZF => {
+                if let Some(fzf_opts) = config::fzf_opts() {
+                    command.env("FZF_DEFAULT_OPTS", fzf_opts);
+                } else {
+                    command.args(&[
+                        // Search result
+                        "--no-sort",
+                        // Interface
+                        "--keep-right",
+                        // Layout
+                        "--height=40%",
+                        "--info=inline",
+                        "--layout=reverse",
+                        // Scripting
+                        "--exit-0",
+                        "--select-1",
+                        // Key/Event bindings
+                        "--bind=ctrl-z:ignore",
+                    ]);
+                    if cfg!(unix) {
+                        command.env("SHELL", "sh");
+                        command.arg(r"--preview=\command -p ls -p {2..}");
+                    }
+                }
+            }
+            config::FuzzySearcher::SKIM => {
+                if let Some(skim_opts) = config::skim_opts() {
+                    command.env("SKIM_DEFAULT_OPTS", skim_opts);
+                } else {
+                    command.args(&[
+                        // Search result
+                        "--no-sort",
+                        // Interface
+                        "--keep-right",
+                        // Layout
+                        "--height=40%",
+                        "--layout=inline",
+                        "--layout=reverse",
+                        // Scripting
+                        "--exit-0",
+                        "--select-1",
+                        // Key/Event bindings
+                        "--bind=ctrl-z:ignore",
+                    ]);
+                    if cfg!(unix) {
+                        command.env("SHELL", "sh");
+                        command.arg(r"--preview=\command -p ls -p {3..}");
+                    }
+                }
             }
         }
 
         let child = match command.spawn() {
             Ok(child) => child,
-            Err(e) if e.kind() == io::ErrorKind::NotFound => bail!(Self::ERR_NOT_FOUND),
-            Err(e) => Err(e).context("could not launch fzf")?,
+            Err(e) if e.kind() == io::ErrorKind::NotFound => bail!(error_not_found_message),
+            Err(e) => Err(e).context("could not launch fuzzy searcher")?,
         };
 
-        Ok(Fzf { child })
+        Ok(FuzzySearcher { child })
     }
 
     pub fn stdin(&mut self) -> &mut ChildStdin {
@@ -70,16 +117,16 @@ impl Fzf {
 
         let mut stdout = self.child.stdout.take().unwrap();
         let mut output = String::new();
-        stdout.read_to_string(&mut output).context("failed to read from fzf")?;
+        stdout.read_to_string(&mut output).context("failed to read from fuzzy searcher")?;
 
-        let status = self.child.wait().context("wait failed on fzf")?;
+        let status = self.child.wait().context("wait failed on fuzzy searcher")?;
         match status.code() {
             Some(0) => Ok(output),
             Some(1) => bail!("no match found"),
-            Some(2) => bail!("fzf returned an error"),
+            Some(2) => bail!("{} returned an error", "lol"),
             Some(code @ 130) => bail!(SilentExit { code }),
-            Some(128..=254) | None => bail!("fzf was terminated"),
-            _ => bail!("fzf returned an unknown error"),
+            Some(128..=254) | None => bail!("fuzzy searcher was terminated"),
+            _ => bail!("fuzzy searcher returned an unknown error"),
         }
     }
 }

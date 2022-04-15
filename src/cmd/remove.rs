@@ -5,7 +5,7 @@ use anyhow::{bail, Context, Result};
 use crate::cmd::{Remove, Run};
 use crate::config;
 use crate::db::DatabaseFile;
-use crate::util::{self, Fzf};
+use crate::util::{self, FuzzySearcher};
 
 impl Run for Remove {
     fn run(&self) -> Result<()> {
@@ -18,7 +18,7 @@ impl Run for Remove {
             let now = util::current_time()?;
             let mut stream = db.stream(now).with_keywords(keywords);
 
-            let mut fzf = Fzf::new(true)?;
+            let mut fzf = FuzzySearcher::new(true)?;
             let stdin = fzf.stdin();
 
             let selection = loop {

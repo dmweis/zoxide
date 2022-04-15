@@ -264,6 +264,13 @@ eval "$(zoxide init posix --hook prompt)"
 selection. It can be installed from [here][fzf-installation]. zoxide supports
 fzf v0.21.0+.
 
+### *Step 3 alternative: Install skim (optional)*
+
+[skim] is a command-line fuzzy finder, used by zoxide for interactive
+selection. It can be installed from [here][skim-installation].  
+As opposed to `fzf` `skim` is written in rust and thus
+you only need `cargo` to instal it.
+
 ### *Step 4: Import your data (optional)*
 
 If you currently use any of the following utilities, you may want to import
@@ -337,6 +344,12 @@ They must be set before `zoxide init` is called.
 - `_ZO_FZF_OPTS`
   - Custom options to pass to [fzf] during interactive selection. See
     [`man fzf`][fzf-man] for the list of options.
+- `_ZO_SKIM_OPTS`
+  - Custom options to pass to [skim] during interactive selection. See
+    [`skim -h`][skim-customization] for the list of options.
+- `_ZO_USE_SKIM`
+  - Custom options to switch between using [skim] or [fzf] as fuzzy searcher.
+    [fzf] is used by default.
 - `_ZO_MAXAGE`
   - Configures the [aging algorithm][algorithm-aging], which limits the maximum
     number of entries in the database.
@@ -385,6 +398,9 @@ They must be set before `zoxide init` is called.
 [fzf-installation]: https://github.com/junegunn/fzf#installation
 [fzf-man]: https://manpages.ubuntu.com/manpages/en/man1/fzf.1.html
 [fzf]: https://github.com/junegunn/fzf
+[skim-installation]: https://github.com/lotabout/skim#installation
+[skim-customization]: https://github.com/lotabout/skim#customization
+[skim]: https://github.com/lotabout/skim
 [glob]: https://man7.org/linux/man-pages/man7/glob.7.html
 [guru overlay]: https://github.com/gentoo-mirror/guru
 [homebrew]: https://formulae.brew.sh/formula/zoxide

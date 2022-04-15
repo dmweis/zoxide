@@ -55,6 +55,10 @@ pub fn fzf_opts() -> Option<OsString> {
     env::var_os("_ZO_FZF_OPTS")
 }
 
+pub fn skim_opts() -> Option<OsString> {
+    env::var_os("_ZO_SKIM_OPTS")
+}
+
 pub fn maxage() -> Result<Rank> {
     match env::var_os("_ZO_MAXAGE") {
         Some(maxage) => {
@@ -71,5 +75,17 @@ pub fn resolve_symlinks() -> bool {
     match env::var_os("_ZO_RESOLVE_SYMLINKS") {
         Some(var) => var == "1",
         None => false,
+    }
+}
+
+pub enum FuzzySearcher {
+    FZF,
+    SKIM,
+}
+
+pub fn fuzzy_searcher() -> FuzzySearcher {
+    match env::var_os("_ZO_USE_SKIM") {
+        Some(var) if var == "1" => FuzzySearcher::SKIM,
+        _ => FuzzySearcher::FZF,
     }
 }
