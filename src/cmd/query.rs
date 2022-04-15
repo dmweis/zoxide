@@ -6,7 +6,7 @@ use crate::cmd::{Query, Run};
 use crate::config;
 use crate::db::{Database, DatabaseFile};
 use crate::error::BrokenPipeHandler;
-use crate::util::{self, Fzf};
+use crate::util::{self, FuzzySearcher};
 
 impl Run for Query {
     fn run(&self) -> Result<()> {
@@ -31,7 +31,7 @@ impl Query {
         }
 
         if self.interactive {
-            let mut fzf = Fzf::new(false)?;
+            let mut fzf = FuzzySearcher::new(false)?;
             let stdin = fzf.stdin();
 
             let selection = loop {
